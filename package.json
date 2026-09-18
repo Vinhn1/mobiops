@@ -1,0 +1,19 @@
+{
+    "name": "mobiops-workspace",
+    "version": "1.0.0",
+    "private": true,
+    "description": "MobiFone Ca Mau Mini App & Admin Portal Workspace",
+    "workspaces": [
+        "packages/*",
+        "apps/*"
+    ],
+    "scripts": {
+        "dev:mini": "npm run dev --workspace=apps/mini-app",
+        "dev:admin": "npm run dev --workspace=apps/admin-portal",
+        "build": "npm run build --workspaces",
+        "lint": "npm run lint --workspaces"
+    },
+    "devDependencies": {
+        "typescript": "^5.4.0"
+    }
+}
