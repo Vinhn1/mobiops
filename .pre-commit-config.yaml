@@ -1,0 +1,84 @@
+# Pre-commit configuration for MobiFone Ca Mau Mini App
+#
+# NGUON GOC:
+# - pre-commit framework: https://pre-commit.com/
+# - Gitleaks v8: https://github.com/gitleaks/gitleaks
+# - Semgrep: https://semgrep.dev/
+#
+# CAI DAT:
+#   pip install pre-commit
+#   pre-commit install
+#
+# CHAY THU CONG:
+#   pre-commit run --all-files
+#
+# LUONG: Chay truoc moi `git commit`. Neu fail -> commit bi chan.
+#
+# QUAN TRONG:
+# - File nay khong thay the CI/CD security gate.
+# - Day la lop bao ve som (early warning) phia developer.
+# - CI gate la bat buoc. Pre-commit la helper.
+
+repos:
+  # ============================================================
+  # Secret Scanning — Gitleaks
+  # Pin bang commit SHA (v8.24.0 — xac minh tai https://github.com/gitleaks/gitleaks/releases)
+  # CANH BAO: Cap nhat SHA khi co phien ban moi.
+  # ============================================================
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.0
+    hooks:
+      - id: gitleaks
+        name: "[Security] Detect hardcoded secrets (Gitleaks)"
+        description: "Quet tim API key, password, token bi hardcode"
+
+  # ============================================================
+  # Standard pre-commit hooks
+  # ============================================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-merge-conflict
+        name: "[Git] Check merge conflicts"
+      - id: check-added-large-files
+        name: "[Git] Block large files"
+        args: ['--maxkb=1024']  # block file > 1MB
+      - id: detect-private-key
+        name: "[Security] Detect private keys"
+      - id: end-of-file-fixer
+        name: "[Format] Fix end of file"
+      - id: trailing-whitespace
+        name: "[Format] Trim trailing whitespace"
+      - id: check-json
+        name: "[Format] Validate JSON syntax"
+      - id: check-yaml
+        name: "[Format] Validate YAML syntax"
+        exclude: "^.github/workflows/"  # GitHub Actions syntax khac YAML chuan doi chut
+
+  # ============================================================
+  # Node.js / TypeScript specific
+  # ============================================================
+  - repo: local
+    hooks:
+      - id: npm-audit
+        name: "[Security] npm audit (CRITICAL/HIGH)"
+        language: system
+        entry: bash -c 'npm audit --audit-level=high'
+        pass_filenames: false
+        files: "package(-lock)?.json"
+        description: "Block commit neu co CRITICAL/HIGH CVE"
+
+      - id: no-console-log
+        name: "[Quality] Detect console.log in source files"
+        language: pygrep
+        entry: '\bconsole\.log\b'
+        types: [ts, tsx, javascript]
+        exclude: "\\.(spec|test|stories)\\.(ts|tsx|js)$|^scripts/"
+        description: "Warn: console.log trong production code (khong block, chi warn)"
+        # NOTE: Dat stages: [push] hoac comment out neu qua nhieu false positive
+
+# ============================================================
+# Global config
+# ============================================================
+default_stages: [pre-commit]
+fail_fast: false  # chay het tat ca hook, bao cao tat ca loi cung luc

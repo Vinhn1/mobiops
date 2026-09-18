@@ -1,0 +1,312 @@
+# .github/workflows/security-gate.yml
+#
+# Security Gate — MobiFone Ca Mau Mini App
+#
+# NGUON GOC:
+#   GitHub Actions Security Hardening:
+#     https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions
+#   OWASP AISVS 1.0 AC.4.2:
+#     https://github.com/OWASP/AISVS
+#   OpenSSF Scorecard — CI: https://securityscorecards.dev/
+#
+# TRIGGER:
+#   - Pull Request vao main / develop (bat buoc)
+#   - Push vao main / develop
+#   - Manual workflow_dispatch
+#
+# LUONG:
+#   secret-scan → lint-typecheck → tests → sast → dep-scan → report
+#
+# IMPORTANT — SHA PINNING:
+#   Cac third-party actions PHAI duoc pin bang commit SHA (khong phai tag).
+#   SHA trong file nay can duoc KIEM TRA VA CAP NHAT thu cong.
+#
+#   Cach tim SHA chinh thuc:
+#   1. Vao trang Releases cua action repo tren GitHub
+#   2. Click vao version muon dung
+#   3. Copy "Full SHA" cua commit do
+#   4. Them comment ghi ro version
+#
+#   SHA duoi day la PLACEHOLDER. Thay bang SHA chinh thuc truoc khi su dung.
+#   Format: uses: owner/repo@SHA  # vX.Y.Z
+
+name: Security Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+    inputs:
+      scan_mode:
+        description: "Scan mode"
+        required: false
+        default: "full"
+        type: choice
+        options:
+          - full
+          - secrets-only
+          - deps-only
+
+# Minimum permissions — theo nguyen tac least privilege
+permissions:
+  contents: read
+  pull-requests: write  # De post comment ket qua len PR
+  security-events: write  # De upload SARIF len GitHub Security tab
+
+# Cancel run cu khi co run moi hon cung PR/branch
+concurrency:
+  group: security-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ============================================================
+  # Job 1: Secret Scanning (chay dau tien, fail fast)
+  # ============================================================
+  secret-scan:
+    name: "Secret Scan (Gitleaks)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        # PLACEHOLDER SHA — Thay bang SHA chinh thuc cua actions/checkout
+        # Tim tai: https://github.com/actions/checkout/releases
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Can full history de Gitleaks quet ca commits
+
+      - name: Run Gitleaks
+        # PLACEHOLDER SHA — Thay bang SHA chinh thuc cua gitleaks action
+        # Tim tai: https://github.com/gitleaks/gitleaks-action/releases
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GITLEAKS_LICENSE khong can voi OSS project hoac private repo co plan phu hop
+        with:
+          args: --redact --exit-code 1
+
+  # ============================================================
+  # Job 2: Lint + Type Check
+  # ============================================================
+  lint-typecheck:
+    name: "Lint & Type Check"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [secret-scan]  # Khong chay neu secret-scan fail
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        # PLACEHOLDER SHA — Tim tai: https://github.com/actions/setup-node/releases
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"  # Dung .nvmrc neu co, else them node-version: '20'
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci  # ci: dung lockfile, khong modify
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: TypeScript type check
+        run: npx tsc --noEmit
+
+  # ============================================================
+  # Job 3: Tests
+  # ============================================================
+  tests:
+    name: "Tests"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [lint-typecheck]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests with coverage
+        run: npm test -- --coverage --coverageReporters=json-summary --passWithNoTests=false
+        env:
+          NODE_ENV: test
+
+      - name: Upload coverage report
+        # PLACEHOLDER SHA — Tim tai: https://github.com/actions/upload-artifact/releases
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+
+  # ============================================================
+  # Job 4: SAST (Semgrep)
+  # ============================================================
+  sast:
+    name: "SAST (Semgrep)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Chay song song voi tests de tiet kiem thoi gian
+    needs: [lint-typecheck]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep SAST
+        # PLACEHOLDER SHA — Tim tai: https://github.com/semgrep/semgrep-action/releases
+        # Hoac dung semgrep CLI truc tiep neu khong muon dung action
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: >-
+            p/typescript
+            p/nodejs
+            p/owasp-top-ten
+          publishResults: false  # Khong gui len Semgrep Cloud (OSS use case)
+          # Neu muon upload SARIF len GitHub Security tab:
+          # publishToken: ${{ secrets.SEMGREP_APP_TOKEN }}
+        env:
+          SEMGREP_RULES: >-
+            p/typescript
+            p/nodejs
+            p/owasp-top-ten
+
+      - name: Upload SARIF to GitHub Security tab
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: semgrep-sarif
+          path: semgrep.sarif
+          retention-days: 30
+
+  # ============================================================
+  # Job 5: Dependency Vulnerability Scan
+  # ============================================================
+  dep-scan:
+    name: "Dependency Scan (npm audit + OSV)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [secret-scan]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      - name: Install dependencies (ci mode)
+        run: npm ci
+
+      - name: npm audit (HIGH+)
+        run: npm audit --audit-level=high --json > npm-audit-report.json || true
+
+      - name: Parse npm audit result
+        id: npm_audit_result
+        run: |
+          python3 - <<'EOF'
+          import json, sys, os
+
+          try:
+            with open('npm-audit-report.json') as f:
+              data = json.load(f)
+
+            vulns = data.get('vulnerabilities', {})
+            critical = sum(1 for v in vulns.values() if v.get('severity') == 'critical')
+            high = sum(1 for v in vulns.values() if v.get('severity') == 'high')
+
+            print(f"::notice::npm audit: CRITICAL={critical}, HIGH={high}")
+
+            if critical > 0 or high > 0:
+              print(f"::error::npm audit tim thay {critical} CRITICAL va {high} HIGH vulnerabilities. Phai xu ly truoc khi merge.")
+              sys.exit(1)
+            else:
+              print("::notice::npm audit PASS: khong co CRITICAL/HIGH vulnerability")
+          except Exception as e:
+            print(f"::warning::Khong phan tich duoc npm audit report: {e}")
+          EOF
+
+      - name: Install OSV-Scanner
+        run: |
+          OSV_VERSION="v2.0.0"  # CANH BAO: Kiem tra phien ban moi nhat truoc khi dung
+          # https://github.com/google/osv-scanner/releases
+          curl -fsSL \
+            "https://github.com/google/osv-scanner/releases/download/${OSV_VERSION}/osv-scanner_linux_amd64" \
+            -o /usr/local/bin/osv-scanner
+          chmod +x /usr/local/bin/osv-scanner
+          osv-scanner --version
+
+      - name: Run OSV-Scanner
+        run: |
+          osv-scanner \
+            --lockfile=package-lock.json \
+            --json \
+            > osv-report.json 2>/dev/null \
+            || { echo "::error::OSV-Scanner phat hien vulnerability!"; cat osv-report.json; exit 1; }
+
+      - name: Upload dependency reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-scan-reports
+          path: |
+            npm-audit-report.json
+            osv-report.json
+          retention-days: 30
+
+  # ============================================================
+  # Job 6: Final Summary (chay sau tat ca jobs)
+  # ============================================================
+  security-summary:
+    name: "Security Gate Summary"
+    runs-on: ubuntu-latest
+    needs: [secret-scan, lint-typecheck, tests, sast, dep-scan]
+    if: always()  # Chay du truoc do fail
+
+    steps:
+      - name: Check all jobs status
+        run: |
+          echo "## Security Gate Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Secret Scan | ${{ needs.secret-scan.result == 'success' && 'PASS' || 'FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint & Type Check | ${{ needs.lint-typecheck.result == 'success' && 'PASS' || 'FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tests | ${{ needs.tests.result == 'success' && 'PASS' || 'FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| SAST (Semgrep) | ${{ needs.sast.result == 'success' && 'PASS' || 'FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dependency Scan | ${{ needs.dep-scan.result == 'success' && 'PASS' || 'FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+
+          # Fail job neu bat ky check quan trong fail
+          if [[ "${{ needs.secret-scan.result }}" != "success" ]] || \
+             [[ "${{ needs.sast.result }}" != "success" ]] || \
+             [[ "${{ needs.dep-scan.result }}" != "success" ]]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "> [!CAUTION]" >> $GITHUB_STEP_SUMMARY
+            echo "> Security gate FAIL. Khong duoc merge cho den khi fix xong." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> [!NOTE]" >> $GITHUB_STEP_SUMMARY
+          echo "> Security gate PASS. Human code review van la bat buoc truoc khi merge." >> $GITHUB_STEP_SUMMARY

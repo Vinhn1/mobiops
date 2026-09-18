@@ -56,3 +56,22 @@ coverage/
 
 # Vite
 vite.config.ts.timestamp-*
+
+# Security scan reports & artifacts
+reports/security/*
+!reports/security/.gitkeep
+*.sarif
+*-report.json
+gitleaks-report.json
+osv-report.json
+semgrep-report.json
+
+# Python caches & virtualenvs
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+ENV/
+
