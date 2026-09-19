@@ -1,35 +1,37 @@
 import React from 'react';
-import { TelecomPackage } from '@mobiops/shared';
-import { Smartphone, ShieldCheck, MapPin, Zap } from 'lucide-react';
+import { TELECOM_PACKAGES } from '@mobiops/shared';
+import { Smartphone, ShieldCheck, Zap, Bell } from 'lucide-react';
+import mobifoneLogo from './assets/logo.png';
 
-// Du lieu mau goi cuoc noi bat lay theo mau Stitch KC135
-const FEATURED_PACKAGE: TelecomPackage = {
-    id: 'kc135',
-    code: 'KC135',
-    name: 'Gói Cước KC135 Đỉnh Cao Data',
-    price: 135000,
-    cycle: '30 ngày',
-    dataPerDay: '6GB/Ngày',
-    totalData: '180GB',
-    voiceInternal: 'Miễn phí gọi nội mạng < 10 phút',
-    voiceExternal: '50 phút gọi liên mạng',
-    isHot: true,
-};
+// Du lieu goi cuoc noi bat KC135 tu @mobiops/shared
+const FEATURED_PACKAGE = TELECOM_PACKAGES[0];
 
 export const App: React.FC = () => {
     return (
         <div className="min-h-screen max-w-md mx-auto bg-mobifone-canvas pb-20 shadow-md">
-            {/* App Header */}
-            <header className="bg-mobifone-blue text-white px-4 py-4 rounded-b-2xl shadow-sm flex items-center justify-between">
-                <div>
-                    <h1 className="text-lg font-bold tracking-tight">MobiFone Cà Mau</h1>
-                    <p className="text-xs text-blue-100 flex items-center gap-1 mt-0.5">
-                        <MapPin size={12} /> Chi nhánh tỉnh Cà Mau
-                    </p>
+            {/* App Header with Official Logo */}
+            <header className="bg-white border-b border-slate-200 px-4 py-3 sticky top-0 z-30 shadow-sm">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <img 
+                            src={mobifoneLogo} 
+                            alt="MobiFone Cà Mau" 
+                            className="h-6 object-contain" 
+                        />
+                        <span className="text-[11px] font-bold text-mobifone-blue bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">
+                            CÀ MAU
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="bg-mobifone-red/10 text-mobifone-red text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <Zap size={12} /> 5G
+                        </span>
+                        <button className="p-1.5 text-slate-500 hover:text-mobifone-blue rounded-full hover:bg-slate-100 transition-colors relative">
+                            <Bell size={18} />
+                            <span className="absolute top-1 right-1 w-2 h-2 bg-mobifone-red rounded-full"></span>
+                        </button>
+                    </div>
                 </div>
-                <span className="bg-mobifone-red text-white text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <Zap size={12} /> 5G Ready
-                </span>
             </header>
 
             {/* Main Content */}

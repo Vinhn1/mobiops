@@ -43,8 +43,8 @@ elseif ($Full) {
     gitleaks detect --verbose --redact --report-path $reportFile
 }
 else {
-    Write-Host "[INFO] Che do: Quet thu muc ma nguon hien tai..."
-    gitleaks detect --no-git --verbose --redact --report-path $reportFile
+    Write-Host "[INFO] Che do: Quet ma nguon hien tai (ton trong .gitignore)..."
+    gitleaks detect --verbose --redact --report-path $reportFile
 }
 
 $exitCode = $LASTEXITCODE
