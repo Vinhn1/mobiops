@@ -21,6 +21,8 @@ export function maskPhoneNumber(phone: string): string {
     return `${firstPart} *** ${lastPart}`;
 }
 
+export const maskPhone = maskPhoneNumber;
+
 /**
  * Che giau so CCCD/CMND: Chi giu lai 4 so cuoi cung
  * Vi du: '096092001234' -> '********1234'

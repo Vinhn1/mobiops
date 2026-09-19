@@ -14,6 +14,24 @@ export type TicketCategory =
     | 'VAS_SERVICE'
     | 'OTHER';
 
+export const TICKET_CATEGORY_LABELS: Record<TicketCategory, string> = {
+    NETWORK_SIGNAL: 'Sóng & Kết nối mạng',
+    BILLING: 'Cước phí & Nạp tiền',
+    SIM_ESIM: 'Thủ tục SIM & eSIM',
+    VAS_SERVICE: 'Gói cước & Dịch vụ VAS',
+    OTHER: 'Yêu cầu hỗ trợ khác',
+};
+
+export const TICKET_STATUS_LABELS: Record<TicketStatus, string> = {
+    RECEIVED: 'Tiếp nhận',
+    CLASSIFIED: 'Phân loại',
+    PROCESSING: 'Đang xử lý',
+    RESPONDED: 'Đã phản hồi',
+    CONFIRMED: 'Khách xác nhận',
+    RESOLVED: 'Đã hoàn tất',
+    REJECTED: 'Từ chối / Hủy',
+};
+
 export type TicketPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 
 export interface Ticket {
