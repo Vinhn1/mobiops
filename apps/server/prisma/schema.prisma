@@ -1,0 +1,209 @@
+// apps/server/prisma/schema.prisma
+// Database Schema for MobiOps - MobiFone Ca Mau Operations System
+// Strictly complies with Layered Clean Architecture and Decree 13/2023/ND-CP
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum LeadStatus {
+  NEW
+  ASSIGNED
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  LOST
+  UNQUALIFIED
+  DROPPED
+}
+
+enum TicketStatus {
+  RECEIVED
+  CLASSIFIED
+  PROCESSING
+  RESPONDED
+  CONFIRMED
+  RESOLVED
+  REJECTED
+}
+
+enum TicketCategory {
+  NETWORK_SIGNAL
+  BILLING
+  SIM_ESIM
+  VAS_SERVICE
+  OTHER
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  DISTRICT_MANAGER
+  TELESALES
+  FIELD_TECH
+  SUPPORT_AGENT
+}
+
+enum CustomerTier {
+  STANDARD
+  SILVER
+  GOLD
+  DIAMOND
+}
+
+/// Thong tin Khach hang / Thue bao MobiFone
+model Customer {
+  id           String       @id @default(uuid())
+  phone        String       @unique @db.VarChar(15)
+  fullName     String       @db.VarChar(100)
+  citizenId    String?      @db.VarChar(20)
+  tier         CustomerTier @default(STANDARD)
+  rewardPoints Int          @default(0)
+  districtId   String?      @db.VarChar(50)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  leads        Lead[]
+  tickets      Ticket[]
+
+  @@index([phone])
+  @@index([districtId])
+  @@map("customers")
+}
+
+/// Diem giao dich / Cua hang MobiFone tai tinh Ca Mau
+model Store {
+  id           String   @id @db.VarChar(50)
+  name         String   @db.VarChar(150)
+  districtId   String   @db.VarChar(50)
+  address      String   @db.VarChar(255)
+  phone        String   @db.VarChar(20)
+  latitude     Float
+  longitude    Float
+  openingHours String   @db.VarChar(100)
+  services     String[]
+  isMain       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  users        User[]
+  leads        Lead[]
+  tickets      Ticket[]
+
+  @@index([districtId])
+  @@map("stores")
+}
+
+/// Nguoi dung he thong quan tri / Chuyen vien MobiFone
+model User {
+  id           String    @id @default(uuid())
+  username     String    @unique @db.VarChar(50)
+  email        String    @unique @db.VarChar(100)
+  passwordHash String    @db.VarChar(255)
+  fullName     String    @db.VarChar(100)
+  role         UserRole  @default(TELESALES)
+  storeId      String?   @db.VarChar(50)
+  store        Store?    @relation(fields: [storeId], references: [id], onDelete: SetNull)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  assignedLeads   Lead[]
+  assignedTickets Ticket[]
+  auditLogs       AuditLog[]
+
+  @@index([role])
+  @@index([storeId])
+  @@map("users")
+}
+
+/// Ho so Lead - Yeu cau tu van goi cuoc vien thong tu Mini App
+model Lead {
+  id            String     @id @default(uuid())
+  code          String     @unique @db.VarChar(32)
+  customerId    String?
+  customer      Customer?  @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerName  String     @db.VarChar(100)
+  customerPhone String     @db.VarChar(15)
+  districtId    String     @db.VarChar(50)
+  packageCode   String     @db.VarChar(50)
+  channel       String     @default("MINI_APP") @db.VarChar(30)
+  status        LeadStatus @default(NEW)
+  assignedToId  String?
+  assignedTo    User?      @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
+  storeId       String?    @db.VarChar(50)
+  store         Store?     @relation(fields: [storeId], references: [id], onDelete: SetNull)
+  notes         String?    @db.Text
+  metadata      Json?      // JSONB luu tru thong tin bo sung (thiet bi, goi de xuat)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([status])
+  @@index([districtId])
+  @@index([customerPhone])
+  @@index([createdAt])
+  @@map("leads")
+}
+
+/// Phieu ho tro / Khieu nai / Phan anh song yeu tu khach hang
+model Ticket {
+  id                String         @id @default(uuid())
+  code              String         @unique @db.VarChar(32)
+  customerId        String?
+  customer          Customer?      @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerName      String         @db.VarChar(100)
+  customerPhone     String         @db.VarChar(15)
+  districtId        String         @db.VarChar(50)
+  category          TicketCategory @default(NETWORK_SIGNAL)
+  priority          TicketPriority @default(MEDIUM)
+  title             String         @db.VarChar(200)
+  description       String         @db.Text
+  preferredCallTime String?        @db.VarChar(30)
+  attachmentUrls    String[]
+  status            TicketStatus   @default(RECEIVED)
+  assignedToId      String?
+  assignedTo        User?          @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
+  storeId           String?        @db.VarChar(50)
+  store             Store?         @relation(fields: [storeId], references: [id], onDelete: SetNull)
+  resolution        String?        @db.Text
+  metadata          Json?          // JSONB luu tru chi tiet ngu canh AI va tram BTS
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([status])
+  @@index([category])
+  @@index([districtId])
+  @@index([customerPhone])
+  @@index([createdAt])
+  @@map("tickets")
+}
+
+/// Nhat ky kiem toan bat bien tuan thu Nghi dinh 13/2023/ND-CP
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String   @db.VarChar(50)
+  resource   String   @db.VarChar(50)
+  resourceId String   @db.VarChar(100)
+  details    Json?    // JSONB luu tru chi tiet thay doi hoac ly do mo PII
+  ipAddress  String?  @db.VarChar(45)
+  userAgent  String?  @db.VarChar(255)
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([resource, resourceId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

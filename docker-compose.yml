@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mobiops-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mobiops_admin
+      POSTGRES_PASSWORD: mobiops_secure_pass_2026
+      POSTGRES_DB: mobiops_camau
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mobiops_admin -d mobiops_camau"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    driver: local
