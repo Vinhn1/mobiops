@@ -45,7 +45,7 @@ export const ProfilePage: React.FC<ProfileProps> = ({
   const displayedPhone = isPhoneRevealed ? '0903 892 456' : maskPhone(rawPhone);
 
   return (
-    <div className="flex flex-col w-full bg-surface pb-12">
+    <div className="flex flex-col w-full bg-surface">
       {/* Top Action Bar */}
       <div className="px-margin pt-space-xs pb-space-md flex flex-col gap-space-md">
         <div className="flex items-center justify-between">
@@ -123,17 +123,17 @@ export const ProfilePage: React.FC<ProfileProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="mt-space-md pt-space-xs flex items-center justify-between gap-space-xs">
-            <button className="flex-1 h-11 px-space-md rounded-xl bg-surface-container-low hover:bg-surface-container-high text-primary font-button-sm text-button-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all font-semibold">
-              <Edit3 className="w-4 h-4" />
-              <span>Chỉnh sửa hồ sơ</span>
+          <div className="mt-space-md pt-space-xs flex items-center gap-2">
+            <button className="flex-1 min-w-0 h-11 px-3 rounded-xl bg-surface-container-low hover:bg-surface-container-high text-primary font-button-sm text-button-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all font-semibold">
+              <Edit3 className="w-4 h-4 shrink-0" />
+              <span className="truncate">Chỉnh sửa hồ sơ</span>
             </button>
             <button
               onClick={() => setShowQrModal(true)}
-              className="h-11 px-space-md rounded-xl bg-primary-fixed text-primary font-button-sm text-button-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all font-semibold"
+              className="flex-1 min-w-0 h-11 px-3 rounded-xl bg-primary-fixed text-primary font-button-sm text-button-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all font-semibold"
             >
-              <QrCode className="w-4 h-4" />
-              <span>Mã QR của tôi</span>
+              <QrCode className="w-4 h-4 shrink-0" />
+              <span className="truncate">Mã QR của tôi</span>
             </button>
           </div>
         </div>

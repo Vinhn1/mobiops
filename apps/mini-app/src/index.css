@@ -2,8 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-    margin: 0;
-    padding: 0;
-    -webkit-tap-highlight-color: transparent;
+@layer base {
+    html, body {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        background-color: #faf8ff;
+    }
+    body {
+        overscroll-behavior: none;
+        -webkit-tap-highlight-color: transparent;
+    }
 }
+
+/* Hide scrollbars completely for smooth mobile look */
+::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}

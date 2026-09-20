@@ -23,15 +23,9 @@ import {
   ThumbsDown,
   Clock,
   FileEdit,
-  PhoneCall,
-  X,
-  Send,
-  AlertCircle
+  PhoneCall
 } from 'lucide-react';
 import {
-  CAMAU_ADMINISTRATIVE_UNITS,
-  CreateTicketSchema,
-  TICKET_CATEGORY_LABELS,
   TicketCategory
 } from '@mobiops/shared';
 
@@ -39,6 +33,7 @@ interface SupportProps {
   onBackToHome: () => void;
   onOpenAIChat: () => void;
   onNavigateToStores: () => void;
+  onNavigateToCreateTicket?: (category?: TicketCategory) => void;
 }
 
 interface FAQItem {
@@ -52,22 +47,13 @@ interface FAQItem {
 export const SupportPage: React.FC<SupportProps> = ({
   onBackToHome,
   onOpenAIChat,
-  onNavigateToStores
+  onNavigateToStores,
+  onNavigateToCreateTicket
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [expandedFaqId, setExpandedFaqId] = useState<string | null>('faq-1');
   const [helpfulFeedback, setHelpfulFeedback] = useState<Record<string, boolean | null>>({});
-
-  // Ticket creation modal state
-  const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
-  const [ticketCustomerName, setTicketCustomerName] = useState('');
-  const [ticketPhone, setTicketPhone] = useState('');
-  const [ticketCategory, setTicketCategory] = useState<TicketCategory>('NETWORK_SIGNAL');
-  const [ticketDistrict, setTicketDistrict] = useState(CAMAU_ADMINISTRATIVE_UNITS[0].code);
-  const [ticketDescription, setTicketDescription] = useState('');
-  const [ticketError, setTicketError] = useState<string | null>(null);
-  const [ticketSuccess, setTicketSuccess] = useState<string | null>(null);
 
   // Active tracking ticket state
   const [showActiveTicket, setShowActiveTicket] = useState(true);
@@ -188,10 +174,7 @@ export const SupportPage: React.FC<SupportProps> = ({
           </div>
           <div className="mt-2">
             <button
-              onClick={() => {
-                setTicketCategory('NETWORK_SIGNAL');
-                setIsTicketModalOpen(true);
-              }}
+              onClick={() => onNavigateToCreateTicket?.('NETWORK_SIGNAL')}
               className="w-full h-9 rounded-lg bg-primary-container text-on-primary text-[12px] font-semibold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all"
             >
               <Antenna className="w-4 h-4" />
@@ -219,38 +202,8 @@ export const SupportPage: React.FC<SupportProps> = ({
     return matchesSearch && matchesCat;
   });
 
-  const handleCreateTicket = (e: React.FormEvent) => {
-    e.preventDefault();
-    setTicketError(null);
-
-    const validation = CreateTicketSchema.safeParse({
-      customerName: ticketCustomerName.trim() || undefined,
-      customerPhone: ticketPhone,
-      category: ticketCategory,
-      districtId: ticketDistrict,
-      title: `Yêu cầu hỗ trợ: ${TICKET_CATEGORY_LABELS[ticketCategory]}`,
-      description: ticketDescription,
-    });
-
-    if (!validation.success) {
-      setTicketError(validation.error.errors[0]?.message || 'Thông tin chưa hợp lệ');
-      return;
-    }
-
-    const ticketCode = `CM-HOTRO-${Math.floor(10000 + Math.random() * 90000)}`;
-    setTicketSuccess(ticketCode);
-    setTimeout(() => {
-      setIsTicketModalOpen(false);
-      setTicketSuccess(null);
-      setTicketCustomerName('');
-      setTicketPhone('');
-      setTicketDescription('');
-      setShowActiveTicket(true);
-    }, 2000);
-  };
-
   return (
-    <div className="flex flex-col w-full bg-surface pb-12">
+    <div className="flex flex-col w-full bg-surface">
       {/* Top Bar Navigation */}
       <div className="px-margin pt-space-xs pb-space-sm bg-surface-container-lowest shadow-sm">
         <div className="flex items-center justify-between">
@@ -262,12 +215,11 @@ export const SupportPage: React.FC<SupportProps> = ({
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <div className="flex flex-col">
-              <h1 className="font-h2 text-h2 text-on-surface tracking-tight leading-snug">Hỏi Đáp & Hỗ Trợ (FAQ)</h1>
-              <span className="font-caption text-caption text-on-surface-variant">Trung tâm giải đáp dịch vụ MobiFone Cà Mau</span>
-            </div>
+            <h1 className="font-h2 text-h2 font-bold text-on-surface tracking-tight">
+              Hỏi đáp & Hỗ trợ
+            </h1>
           </div>
-          <div className="flex items-center gap-1.5 px-space-xs py-1 rounded-full bg-primary-fixed text-primary">
+          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary-fixed text-primary">
             <Verified className="w-3.5 h-3.5" />
             <span className="font-caption text-[11px] font-semibold">Chính thức</span>
           </div>
@@ -310,43 +262,26 @@ export const SupportPage: React.FC<SupportProps> = ({
       </div>
 
       <div className="px-margin flex flex-col gap-space-lg mt-space-md">
-        {/* Active Ticket Progress Card (if present) */}
+        {/* Active Ticket Progress (Mini Badge if exists) */}
         {showActiveTicket && (
-          <section className="relative overflow-hidden rounded-xl bg-surface-container-lowest p-space-md shadow-md border border-primary/20">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary via-primary-container to-secondary"></div>
-            <div className="flex items-start justify-between gap-space-xs mt-1">
+          <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 flex items-center justify-between shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
               <div className="flex flex-col">
-                <span className="font-caption text-caption font-semibold tracking-wider text-primary">#CM-HOTRO-93821</span>
-                <span className="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1 mt-0.5">
-                  <Clock className="w-3.5 h-3.5 text-tertiary" />
-                  Hôm nay, 14:25 • Tiếp nhận qua Trợ lý AI
-                </span>
-              </div>
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 text-[11px] font-semibold">
-                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                Đang xử lý
-              </span>
-            </div>
-            <div className="mt-space-sm">
-              <h2 className="font-h3 text-h3 text-on-surface leading-snug font-bold">
-                Hỗ trợ kiểm tra điều kiện gói cước KC135 & SIM 5G
-              </h2>
-            </div>
-            <div className="mt-space-sm bg-surface-container-low rounded-lg p-space-sm">
-              <div className="flex items-center justify-between text-[11px] font-caption text-on-surface-variant mb-1.5">
-                <span className="font-semibold text-primary">Bước 2/4: Chuẩn bị hỗ trợ</span>
-                <span>Tiến độ 50%</span>
-              </div>
-              <div className="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden mb-2.5">
-                <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: '50%' }}></div>
-              </div>
-              <div className="flex items-start gap-space-xs text-on-surface">
-                <p className="font-body-sm text-body-sm leading-snug text-on-surface">
-                  Chuyên viên <strong className="font-semibold text-primary">Lê Hoài Nam</strong> (Cửa hàng TP. Cà Mau) đang chuẩn bị liên hệ lại với quý khách.
-                </p>
+                <div className="flex items-center gap-2">
+                  <span className="font-caption text-[11px] font-bold text-amber-900">#CM-HOTRO-93821</span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-semibold">Đang xử lý (50%)</span>
+                </div>
+                <span className="text-[11px] text-amber-800 line-clamp-1">KTV Lê Hoài Nam đang chuẩn bị liên hệ lại</span>
               </div>
             </div>
-          </section>
+            <button
+              onClick={() => setShowActiveTicket(false)}
+              className="text-amber-600 hover:text-amber-800 text-xs px-2 py-1"
+            >
+              Đóng
+            </button>
+          </div>
         )}
 
         {/* Smart Guidance Banner */}
@@ -515,7 +450,7 @@ export const SupportPage: React.FC<SupportProps> = ({
           </div>
           <div className="grid grid-cols-1 gap-2.5 mt-1">
             <button
-              onClick={() => setIsTicketModalOpen(true)}
+              onClick={() => onNavigateToCreateTicket?.()}
               className="w-full h-11 rounded-xl bg-primary text-on-primary font-button text-button font-semibold flex items-center justify-center gap-2 shadow-sm hover:brightness-105 active:scale-98 transition-all"
             >
               <FileEdit className="w-5 h-5" />
@@ -535,122 +470,6 @@ export const SupportPage: React.FC<SupportProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Ticket Creation Modal */}
-      {isTicketModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-margin backdrop-blur-xs">
-          <div className="w-full max-w-sm rounded-2xl bg-surface-container-lowest p-space-lg shadow-xl relative animate-in fade-in zoom-in duration-200">
-            <button
-              onClick={() => setIsTicketModalOpen(false)}
-              aria-label="Đóng"
-              className="absolute top-4 right-4 text-outline hover:text-on-surface p-1 rounded-full"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            {ticketSuccess ? (
-              <div className="py-6 flex flex-col items-center text-center gap-3">
-                <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
-                  <CheckCircle2 className="w-8 h-8" />
-                </div>
-                <h3 className="font-h2 text-h2 font-bold text-on-surface">Đã tạo phiếu thành công!</h3>
-                <p className="text-body-sm text-on-surface-variant">
-                  Mã phiếu của bạn: <strong className="text-primary">{ticketSuccess}</strong>
-                </p>
-                <p className="text-xs text-outline">
-                  Nhân viên kỹ thuật/CSKH MobiFone Cà Mau sẽ liên hệ hỗ trợ bạn trong ít phút.
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handleCreateTicket} className="flex flex-col gap-3">
-                <div className="flex flex-col">
-                  <h3 className="font-h2 text-h2 font-bold text-on-surface">Gửi yêu cầu hỗ trợ</h3>
-                  <p className="text-body-sm text-on-surface-variant">Đội ngũ MobiFone Cà Mau sẽ xử lý ngay</p>
-                </div>
-
-                {ticketError && (
-                  <div className="p-2.5 rounded-lg bg-red-50 text-red-700 text-xs flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span>{ticketError}</span>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-xs font-semibold text-on-surface mb-1">Họ và tên *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Nguyễn Văn A"
-                    value={ticketCustomerName}
-                    onChange={(e) => setTicketCustomerName(e.target.value)}
-                    className="w-full h-10 px-3 rounded-lg bg-surface-container-low border border-outline-variant/50 text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-on-surface mb-1">Số điện thoại MobiFone *</label>
-                  <input
-                    type="tel"
-                    required
-                    placeholder="0903 123 456"
-                    value={ticketPhone}
-                    onChange={(e) => setTicketPhone(e.target.value)}
-                    className="w-full h-10 px-3 rounded-lg bg-surface-container-low border border-outline-variant/50 text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-xs font-semibold text-on-surface mb-1">Loại yêu cầu</label>
-                    <select
-                      value={ticketCategory}
-                      onChange={(e) => setTicketCategory(e.target.value as TicketCategory)}
-                      className="w-full h-10 px-2 rounded-lg bg-surface-container-low border border-outline-variant/50 text-on-surface text-xs focus:outline-none focus:ring-2 focus:ring-primary"
-                    >
-                      {(Object.entries(TICKET_CATEGORY_LABELS) as [TicketCategory, string][]).map(([k, v]) => (
-                        <option key={k} value={k}>{v}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-on-surface mb-1">Khu vực Cà Mau</label>
-                    <select
-                      value={ticketDistrict}
-                      onChange={(e) => setTicketDistrict(e.target.value)}
-                      className="w-full h-10 px-2 rounded-lg bg-surface-container-low border border-outline-variant/50 text-on-surface text-xs focus:outline-none focus:ring-2 focus:ring-primary"
-                    >
-                      {CAMAU_ADMINISTRATIVE_UNITS.map((unit) => (
-                        <option key={unit.code} value={unit.code}>{unit.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-on-surface mb-1">Nội dung chi tiết *</label>
-                  <textarea
-                    required
-                    rows={3}
-                    placeholder="Mô tả cụ thể vấn đề quý khách gặp phải..."
-                    value={ticketDescription}
-                    onChange={(e) => setTicketDescription(e.target.value)}
-                    className="w-full p-2.5 rounded-lg bg-surface-container-low border border-outline-variant/50 text-on-surface text-xs focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full h-10 rounded-xl bg-primary text-on-primary font-button-sm text-sm font-semibold flex items-center justify-center gap-2 shadow-sm hover:brightness-105 active:scale-95 transition-all mt-1"
-                >
-                  <Send className="w-4 h-4" />
-                  <span>Gửi phiếu tiếp nhận</span>
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -79,27 +79,33 @@ export const AIChatPage: React.FC<AIChatPageProps> = ({ onRegisterConsult }) => 
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-120px)] w-full">
+        <div className="flex flex-col h-full w-full bg-surface">
             {/* Chat Header */}
-            <div className="px-4 py-3 bg-white border-b border-slate-100 flex items-center justify-between shadow-sm">
-                <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-mobifone-blue to-blue-600 flex items-center justify-center text-white shadow-sm">
-                        <Sparkles size={18} className="text-amber-300" />
+            <div className="px-margin py-2.5 bg-surface-container-lowest border-b border-outline-variant/30 flex items-center justify-between shadow-xs">
+                <div className="flex items-center gap-space-xs">
+                    <div className="relative w-9 h-9 rounded-full bg-primary-container text-on-primary flex items-center justify-center shadow-sm">
+                        <Sparkles size={17} className="text-amber-300" />
+                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-surface"></span>
                     </div>
-                    <div>
-                        <h2 className="text-xs font-bold text-slate-900">
-                            Trợ Lý AI MobiFone Cà Mau
-                        </h2>
-                        <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                            Đang trực tuyến 24/7
+                    <div className="flex flex-col">
+                        <div className="flex items-center gap-1.5">
+                            <h2 className="font-h3 text-body font-bold text-on-surface">
+                                Trợ lý MobiFone
+                            </h2>
+                            <span className="px-1.5 py-0.2 rounded-full bg-primary-fixed text-primary font-caption text-[10px] font-semibold">
+                                AI v2.4
+                            </span>
+                        </div>
+                        <span className="font-caption text-[11px] text-on-surface-variant flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            Trực tuyến • CSKH Cà Mau
                         </span>
                     </div>
                 </div>
             </div>
 
             {/* Message Feed */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
+            <div className="flex-1 overflow-y-auto px-margin py-space-sm space-y-3.5">
                 {messages.map((m) => (
                     <div
                         key={m.id}
@@ -108,36 +114,36 @@ export const AIChatPage: React.FC<AIChatPageProps> = ({ onRegisterConsult }) => 
                         }`}
                     >
                         {m.sender === 'assistant' && (
-                            <div className="w-7 h-7 rounded-full bg-mobifone-blue text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                            <div className="w-7 h-7 rounded-full bg-primary-container text-on-primary flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
                                 <Sparkles size={14} />
                             </div>
                         )}
 
                         <div
-                            className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed shadow-sm ${
+                            className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 font-body text-body-sm leading-relaxed shadow-xs ${
                                 m.sender === 'user'
-                                    ? 'bg-mobifone-blue text-white rounded-tr-none'
-                                    : 'bg-white text-slate-800 border border-slate-100 rounded-tl-none'
+                                    ? 'bg-primary text-on-primary rounded-tr-none'
+                                    : 'bg-surface-container-lowest text-on-surface border border-outline-variant/30 rounded-tl-none'
                             }`}
                         >
                             <p>{m.text}</p>
 
                             {/* Suggestion Card inside chat */}
                             {m.suggestedPackage && (
-                                <div className="mt-2.5 p-2.5 bg-mobifone-softBlue rounded-xl border border-blue-100 text-slate-800">
-                                    <div className="flex items-center justify-between font-bold text-mobifone-blue">
-                                        <span>{m.suggestedPackage.code}</span>
-                                        <span>{m.suggestedPackage.price.toLocaleString('vi-VN')} đ</span>
+                                <div className="mt-2.5 p-3 bg-surface-container-low rounded-xl border border-primary/20 text-on-surface">
+                                    <div className="flex items-center justify-between font-bold text-primary">
+                                        <span className="font-h3 text-h3">{m.suggestedPackage.code}</span>
+                                        <span className="text-secondary">{m.suggestedPackage.price.toLocaleString('vi-VN')} đ</span>
                                     </div>
-                                    <p className="text-[11px] text-slate-600 mt-1">
+                                    <p className="font-caption text-caption text-on-surface-variant mt-1">
                                         {m.suggestedPackage.dataPerDay} • {m.suggestedPackage.voiceInternal}
                                     </p>
                                     <button
                                         type="button"
                                         onClick={() => onRegisterConsult(m.suggestedPackage!)}
-                                        className="w-full mt-2 bg-mobifone-blue text-white font-bold py-1.5 rounded-lg text-[11px] flex items-center justify-center gap-1 shadow-sm"
+                                        className="w-full mt-2.5 bg-primary hover:bg-primary/90 text-on-primary font-semibold py-2 rounded-lg font-button-sm text-button-sm flex items-center justify-center gap-1.5 shadow-sm active:scale-98 transition-all"
                                     >
-                                        <CheckCircle2 size={13} />
+                                        <CheckCircle2 size={14} />
                                         <span>Đăng ký tư vấn gói này</span>
                                     </button>
                                 </div>
@@ -148,16 +154,16 @@ export const AIChatPage: React.FC<AIChatPageProps> = ({ onRegisterConsult }) => 
                                 <button
                                     type="button"
                                     onClick={() => onRegisterConsult(TELECOM_PACKAGES[0])}
-                                    className="mt-2.5 w-full bg-slate-100 text-mobifone-blue font-bold py-1.5 rounded-lg text-[11px] flex items-center justify-center gap-1.5 hover:bg-slate-200"
+                                    className="mt-2.5 w-full bg-surface-container-high text-primary font-semibold py-1.5 rounded-lg font-button-sm text-button-sm flex items-center justify-center gap-1.5 hover:bg-surface-container transition-colors"
                                 >
-                                    <Headphones size={13} />
-                                    <span>Kết nối chuyên viên tư vấn</span>
+                                    <Headphones size={14} />
+                                    <span>Kết nối chuyên viên Cà Mau</span>
                                 </button>
                             )}
 
                             <span
-                                className={`text-[9px] block mt-1 ${
-                                    m.sender === 'user' ? 'text-blue-100 text-right' : 'text-slate-400'
+                                className={`font-caption text-[9px] block mt-1 ${
+                                    m.sender === 'user' ? 'text-primary-fixed-dim text-right' : 'text-outline'
                                 }`}
                             >
                                 {m.time}
@@ -165,7 +171,7 @@ export const AIChatPage: React.FC<AIChatPageProps> = ({ onRegisterConsult }) => 
                         </div>
 
                         {m.sender === 'user' && (
-                            <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center shrink-0 mt-0.5">
+                            <div className="w-7 h-7 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center shrink-0 mt-0.5">
                                 <User size={14} />
                             </div>
                         )}
@@ -174,17 +180,18 @@ export const AIChatPage: React.FC<AIChatPageProps> = ({ onRegisterConsult }) => 
             </div>
 
             {/* Suggestion Chips */}
-            <div className="px-4 py-1.5 flex gap-1.5 overflow-x-auto scrollbar-none">
+            <div className="px-margin py-1.5 flex gap-1.5 overflow-x-auto no-scrollbar">
                 {[
-                    'Gói cước nào nhiều data nhất?',
-                    'Địa chỉ cửa hàng MobiFone TP. Cà Mau?',
-                    'Cách đổi eSIM trực tuyến?',
+                    'Gói data 4G/5G Cà Mau',
+                    'Tìm cửa hàng gần tôi',
+                    'Thủ tục đổi sang eSIM',
+                    'Gặp nhân viên CSKH',
                 ].map((chip, idx) => (
                     <button
                         key={idx}
                         type="button"
                         onClick={() => handleSend(chip)}
-                        className="px-2.5 py-1 bg-white border border-slate-200 rounded-full text-[11px] text-slate-700 whitespace-nowrap hover:bg-blue-50 hover:text-mobifone-blue hover:border-blue-200 transition-colors shrink-0 shadow-sm"
+                        className="px-3 py-1 rounded-full bg-surface-container-lowest text-primary font-caption text-[11px] font-semibold border border-outline-variant/40 shadow-xs hover:bg-primary hover:text-on-primary active:scale-95 transition-all whitespace-nowrap shrink-0"
                     >
                         {chip}
                     </button>
@@ -192,7 +199,7 @@ export const AIChatPage: React.FC<AIChatPageProps> = ({ onRegisterConsult }) => 
             </div>
 
             {/* Input Form */}
-            <div className="p-3 bg-white border-t border-slate-100">
+            <div className="p-2.5 bg-surface-container-lowest border-t border-outline-variant/30 shadow-[0_-2px_8px_rgba(0,0,0,0.04)]">
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();
@@ -205,12 +212,12 @@ export const AIChatPage: React.FC<AIChatPageProps> = ({ onRegisterConsult }) => 
                         value={inputQuery}
                         onChange={(e) => setInputQuery(e.target.value)}
                         placeholder="Hỏi về gói cước, cửa hàng Cà Mau..."
-                        className="flex-1 px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-mobifone-blue"
+                        className="flex-1 px-3.5 py-2 bg-surface-container-low border border-outline-variant/40 rounded-xl font-body text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                     <button
                         type="submit"
                         disabled={!inputQuery.trim()}
-                        className="w-9 h-9 rounded-xl bg-mobifone-blue text-white flex items-center justify-center disabled:opacity-40 active:scale-95 transition-transform"
+                        className="w-10 h-10 rounded-xl bg-primary-container text-on-primary flex items-center justify-center disabled:opacity-40 active:scale-95 transition-transform shadow-sm"
                     >
                         <Send size={16} />
                     </button>

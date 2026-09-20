@@ -3,7 +3,8 @@ import {
   TELECOM_PACKAGES,
   MOBIFONE_CAMAU_STORES,
   TelecomPackage,
-  Store
+  Store,
+  TicketCategory
 } from '@mobiops/shared';
 import { AppHeader } from './components/layout/AppHeader';
 import { BottomNav, NavTab } from './components/layout/BottomNav';
@@ -12,12 +13,16 @@ import { HomePage } from './pages/Home';
 import { PackagesPage } from './pages/Packages';
 import { StoresPage } from './pages/Stores';
 import { SupportPage } from './pages/Support';
+import { SupportTicketPage } from './pages/SupportTicket';
 import { ProfilePage } from './pages/Profile';
 import { AIChatPage } from './pages/AIChat';
 import { RegisterConsultModal } from './components/package/RegisterConsultModal';
 
+type ActiveView = NavTab | 'aichat' | 'support-ticket';
+
 export const App: React.FC = () => {
-  const [currentTab, setCurrentTab] = useState<NavTab | 'aichat'>('home');
+  const [currentTab, setCurrentTab] = useState<ActiveView>('home');
+  const [supportTicketCategory, setSupportTicketCategory] = useState<TicketCategory | undefined>(undefined);
   const [selectedPackage, setSelectedPackage] = useState<TelecomPackage | null>(null);
   const [isConsultModalOpen, setIsConsultModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -49,50 +54,72 @@ export const App: React.FC = () => {
         hasNotification={true}
       />
 
-      {/* 2. Main Scrollable Container */}
-      <main className="flex-1 w-full pt-14 pb-20 overflow-y-auto">
-        {currentTab === 'home' && (
-          <HomePage
-            packages={TELECOM_PACKAGES}
-            stores={MOBIFONE_CAMAU_STORES}
-            onNavigateTab={(tab) => setCurrentTab(tab)}
-            onOpenAIChat={() => setCurrentTab('aichat')}
-            onRegisterConsult={handleOpenConsultModal}
-            onViewStoreDetail={handleViewStoreDetail}
-          />
-        )}
+      {/* 2a. AI Chat View: chiếm toàn bộ khoảng giữa header và bottom nav, sát khít mép navbar */}
+      {currentTab === 'aichat' && (
+        <div className="absolute inset-0 top-14 bottom-14 flex flex-col z-10 bg-surface">
+          <AIChatPage onRegisterConsult={handleOpenConsultModal} />
+        </div>
+      )}
 
-        {currentTab === 'packages' && (
-          <PackagesPage onRegisterConsult={handleOpenConsultModal} />
-        )}
+      {/* 2b. Main Scrollable Container cho các tab thông thường */}
+      {currentTab !== 'aichat' && (
+        <main className="flex-1 w-full pt-14 pb-20 overflow-y-auto">
+          {currentTab === 'home' && (
+            <HomePage
+              packages={TELECOM_PACKAGES}
+              stores={MOBIFONE_CAMAU_STORES}
+              onNavigateTab={(tab) => setCurrentTab(tab)}
+              onOpenAIChat={() => setCurrentTab('aichat')}
+              onRegisterConsult={handleOpenConsultModal}
+              onViewStoreDetail={handleViewStoreDetail}
+            />
+          )}
 
-        {currentTab === 'stores' && (
-          <StoresPage />
-        )}
+          {currentTab === 'packages' && (
+            <PackagesPage onRegisterConsult={handleOpenConsultModal} />
+          )}
 
-        {currentTab === 'support' && (
-          <SupportPage
-            onBackToHome={() => setCurrentTab('home')}
-            onOpenAIChat={() => setCurrentTab('aichat')}
-            onNavigateToStores={() => setCurrentTab('stores')}
-          />
-        )}
+          {currentTab === 'stores' && (
+            <StoresPage />
+          )}
 
-        {currentTab === 'profile' && (
-          <ProfilePage
-            onOpenAIChat={() => setCurrentTab('aichat')}
-            onNavigateToSupport={() => setCurrentTab('support')}
-            onNavigateToPackages={() => setCurrentTab('packages')}
-            onNavigateToStores={() => setCurrentTab('stores')}
-          />
-        )}
+          {currentTab === 'support' && (
+            <SupportPage
+              onBackToHome={() => setCurrentTab('home')}
+              onOpenAIChat={() => setCurrentTab('aichat')}
+              onNavigateToStores={() => setCurrentTab('stores')}
+              onNavigateToCreateTicket={(category) => {
+                setSupportTicketCategory(category);
+                setCurrentTab('support-ticket');
+              }}
+            />
+          )}
 
-        {currentTab === 'aichat' && (
-          <div className="flex flex-col h-[calc(100vh-3.5rem)]">
-            <AIChatPage onRegisterConsult={handleOpenConsultModal} />
-          </div>
-        )}
-      </main>
+          {currentTab === 'support-ticket' && (
+            <SupportTicketPage
+              onBack={() => setCurrentTab('support')}
+              onNavigateToHome={() => setCurrentTab('home')}
+              onNavigateToStores={() => setCurrentTab('stores')}
+              initialCategory={
+                supportTicketCategory === 'NETWORK_SIGNAL'
+                  ? 'tech'
+                  : supportTicketCategory === 'SIM_ESIM'
+                  ? 'sim'
+                  : 'data'
+              }
+            />
+          )}
+
+          {currentTab === 'profile' && (
+            <ProfilePage
+              onOpenAIChat={() => setCurrentTab('aichat')}
+              onNavigateToSupport={() => setCurrentTab('support')}
+              onNavigateToPackages={() => setCurrentTab('packages')}
+              onNavigateToStores={() => setCurrentTab('stores')}
+            />
+          )}
+        </main>
+      )}
 
       {/* 3. Floating AI Assistant button (shown when not in AI chat) */}
       {currentTab !== 'aichat' && (
@@ -101,7 +128,13 @@ export const App: React.FC = () => {
 
       {/* 4. Bottom Navigation Bar */}
       <BottomNav
-        currentTab={currentTab === 'aichat' ? 'home' : currentTab}
+        currentTab={
+          currentTab === 'aichat'
+            ? 'home'
+            : currentTab === 'support-ticket'
+            ? 'support'
+            : currentTab
+        }
         onSelectTab={(tab) => setCurrentTab(tab)}
       />
 
