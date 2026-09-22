@@ -194,6 +194,8 @@ export const CAMAU_ADMINISTRATIVE_UNITS: DistrictUnit[] = [
     },
 ];
 
+export const CAMAU_DISTRICTS = CAMAU_ADMINISTRATIVE_UNITS;
+
 export function getDistricts(): DistrictUnit[] {
     return CAMAU_ADMINISTRATIVE_UNITS;
 }
